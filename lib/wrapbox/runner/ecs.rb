@@ -142,9 +142,18 @@ module Wrapbox
         current_retry_interval = parameter.retry_interval
 
         begin
-          task = client
+          response = client
             .run_task(build_run_task_options(task_definition_arn, class_name, method_name, args, command, cl, parameter.environments, parameter.task_role_arn))
-            .tasks[0]
+
+          failures = response.failures
+          unless failures.empty?
+            failures.each do |failure|
+              @logger.debug("Failure Task: #{failure.arn}, #{failure.reason}")
+            end
+
+          end
+
+          task = response.tasks[0]
 
           raise LackResource unless task # this case is almost lack of container resource.
 
@@ -195,7 +204,7 @@ module Wrapbox
         rescue LaunchFailure
           if launch_try_count >= parameter.launch_retry
             task_status = fetch_task_status(cl, task.task_arn)
-  
+
             error_message = "Container #{task_definition_name} is failed. task=#{task.task_arn}, exit_code=#{task_status[:exit_code]}, task_stopped_reason=#{task_status[:stopped_reason]}, container_stopped_reason=#{task_status[:container_stopped_reason]}"
             raise LaunchFailure, error_message
           else
