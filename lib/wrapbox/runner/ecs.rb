@@ -79,6 +79,8 @@ module Wrapbox
         parameter = Parameter.new(**parameters)
 
         ths = cmds.map do |cmd|
+          # avoid "Failed to create task, because of lack resource"
+          sleep 0.2
           Thread.new(cmd) do |c|
             run_task(
               task_definition.task_definition_arn, nil, nil, nil,
