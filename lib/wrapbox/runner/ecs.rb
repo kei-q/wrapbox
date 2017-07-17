@@ -79,8 +79,6 @@ module Wrapbox
         parameter = Parameter.new(**parameters)
 
         ths = cmds.map do |cmd|
-          # avoid "Failed to create task, because of lack resource"
-          sleep 0.2
           Thread.new(cmd) do |c|
             run_task(
               task_definition.task_definition_arn, nil, nil, nil,
@@ -250,7 +248,7 @@ module Wrapbox
 
       def fetch_task_status(cluster, task_arn)
         task = client.describe_tasks(cluster: cluster, tasks: [task_arn]).tasks[0]
-        container = task.containers.find { |c| c.name = task_definition_name }
+        container = task.containers.find { |c| c.name == task_definition_name }
         {
           last_status: task.last_status,
           exit_code: container.exit_code,
